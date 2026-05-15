@@ -5,16 +5,6 @@
       "maxDuration": 60
     }
   },
-  "crons": [
-    {
-      "path": "/api/scan",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/alert-check",
-      "schedule": "0 * * * *"
-    }
-  ],
   "env": {
     "TELEGRAM_BOT_TOKEN": "@telegram_bot_token",
     "TELEGRAM_CHAT_ID": "@telegram_chat_id",
