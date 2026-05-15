@@ -8,7 +8,7 @@
   "crons": [
     {
       "path": "/api/scan",
-      "schedule": "5 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/alert-check",
