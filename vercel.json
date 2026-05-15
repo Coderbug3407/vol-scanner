@@ -4,12 +4,5 @@
     "api/*.js": {
       "maxDuration": 60
     }
-  },
-  "env": {
-    "TELEGRAM_BOT_TOKEN": "@telegram_bot_token",
-    "TELEGRAM_CHAT_ID": "@telegram_chat_id",
-    "GOOGLE_SERVICE_ACCOUNT_EMAIL": "@google_service_account_email",
-    "GOOGLE_PRIVATE_KEY": "@google_private_key",
-    "GOOGLE_SHEET_ID": "@google_sheet_id"
   }
 }
