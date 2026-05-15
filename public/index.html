@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📊 Binance Vol Scanner</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #050a0e;
+    --surface: #0d1821;
+    --card: #111d2b;
+    --border: #1a2e42;
+    --accent: #00d4ff;
+    --accent2: #00ff94;
+    --warn: #ff6b35;
+    --red: #ff3860;
+    --green: #00ff94;
+    --text: #e2eaf0;
+    --muted: #5a7a94;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  header {
+    padding: 24px 0 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo h1 {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  .logo span {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-weight: 300;
+  }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    padding: 4px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent2);
+    box-shadow: 0 0 8px var(--accent2);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .controls {
+    padding: 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .filter-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  input[type="text"] {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    width: 200px;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+
+  select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 700;
+  }
+
+  .btn-primary:hover {
+    background: #00b8d9;
+  }
+
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .stat-value {
+    font-size: 22px;
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Table */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .table-header-bar {
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table-title {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  .count-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  thead th:hover { color: var(--accent); }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(26,46,66,0.5);
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover { background: rgba(0,212,255,0.04); }
+  tbody tr:last-child { border-bottom: none; }
+
+  td {
+    padding: 10px 14px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .td-symbol {
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .td-symbol span {
+    font-weight: 400;
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .td-vol {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .td-change {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+
+  .td-price {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Rank */
+  .rank {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    width: 30px;
+  }
+
+  /* Vol bar */
+  .vol-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .vol-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    min-width: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 60px;
+    font-family: var(--mono);
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .loading-spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-msg {
+    text-align: center;
+    padding: 40px;
+    color: var(--red);
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+
+  footer {
+    padding: 24px 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+    border-top: 1px solid var(--border);
+    margin-top: 32px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">📊</div>
+      <div>
+        <h1>VOL SCANNER</h1>
+        <span>Binance USDT Market · Auto-refresh 5m</span>
+      </div>
+    </div>
+    <div class="status-bar">
+      <div class="status-pill"><div class="dot"></div> LIVE</div>
+      <div class="status-pill" id="lastUpdate">--:--</div>
+      <button class="btn btn-primary" onclick="loadData()">⟳ Refresh</button>
+    </div>
+  </header>
+
+  <div class="controls">
+    <span class="filter-label">FILTER:</span>
+    <input type="text" id="search" placeholder="Search symbol..." oninput="renderTable()">
+    <select id="sortBy" onchange="renderTable()">
+      <option value="volume24h">Sort: Volume 24h</option>
+      <option value="priceChange24h">Sort: Price Change</option>
+      <option value="symbol">Sort: Symbol A-Z</option>
+    </select>
+    <select id="volFilter" onchange="renderTable()">
+      <option value="0">Vol: All</option>
+      <option value="1000000">Vol > 1M USDT</option>
+      <option value="10000000">Vol > 10M USDT</option>
+      <option value="100000000">Vol > 100M USDT</option>
+    </select>
+    <select id="changeFilter" onchange="renderTable()">
+      <option value="all">Change: All</option>
+      <option value="up">Only ↑ Up</option>
+      <option value="down">Only ↓ Down</option>
+    </select>
+  </div>
+
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card"><div class="stat-label">Total Pairs</div><div class="stat-value" id="s-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">Total Vol 24h</div><div class="stat-value" id="s-tvol">—</div></div>
+    <div class="stat-card"><div class="stat-label">Gainers</div><div class="stat-value pos" id="s-gainers">—</div></div>
+    <div class="stat-card"><div class="stat-label">Losers</div><div class="stat-value neg" id="s-losers">—</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Change</div><div class="stat-value" id="s-avg">—</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header-bar">
+      <span class="table-title">MARKET VOLUME MONITOR</span>
+      <span class="count-badge" id="rowCount">0 pairs</span>
+    </div>
+    <div id="tableContainer">
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        Loading market data...
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Binance Vol Scanner · Data from Binance API · Alerts via Telegram Bot
+  </footer>
+</div>
+
+<script>
+let allData = [];
+
+function fmtVol(v) {
+  if (v >= 1e9) return (v/1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return (v/1e6).toFixed(2) + 'M';
+  if (v >= 1e3) return (v/1e3).toFixed(1) + 'K';
+  return v.toFixed(0);
+}
+
+function fmtPrice(p) {
+  if (p < 0.000001) return p.toExponential(4);
+  if (p < 0.001) return p.toFixed(8);
+  if (p < 1) return p.toFixed(6);
+  if (p < 1000) return p.toFixed(4);
+  return p.toFixed(2);
+}
+
+async function loadData() {
+  document.getElementById('tableContainer').innerHTML = `
+    <div class="loading"><div class="loading-spinner"></div>Fetching market data...</div>`;
+  try {
+    const res = await fetch('/api/dashboard');
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error);
+    allData = json.data;
+    updateStats();
+    renderTable();
+    document.getElementById('lastUpdate').textContent =
+      new Date().toLocaleTimeString('vi-VN');
+  } catch(e) {
+    document.getElementById('tableContainer').innerHTML =
+      `<div class="error-msg">⚠ Error: ${e.message}</div>`;
+  }
+}
+
+function updateStats() {
+  const total = allData.length;
+  const tvol = allData.reduce((a,b) => a + b.volume24h, 0);
+  const gainers = allData.filter(d => d.priceChange24h > 0).length;
+  const losers = allData.filter(d => d.priceChange24h < 0).length;
+  const avg = allData.reduce((a,b) => a + b.priceChange24h, 0) / total;
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-tvol').textContent = fmtVol(tvol);
+  document.getElementById('s-gainers').textContent = gainers;
+  document.getElementById('s-losers').textContent = losers;
+  const avgEl = document.getElementById('s-avg');
+  avgEl.textContent = (avg >= 0 ? '+' : '') + avg.toFixed(2) + '%';
+  avgEl.className = 'stat-value ' + (avg >= 0 ? 'pos' : 'neg');
+}
+
+function renderTable() {
+  const search = document.getElementById('search').value.toUpperCase();
+  const sortBy = document.getElementById('sortBy').value;
+  const volMin = parseFloat(document.getElementById('volFilter').value);
+  const changeF = document.getElementById('changeFilter').value;
+
+  let data = [...allData];
+
+  if (search) data = data.filter(d => d.symbol.includes(search));
+  if (volMin > 0) data = data.filter(d => d.volume24h >= volMin);
+  if (changeF === 'up') data = data.filter(d => d.priceChange24h > 0);
+  if (changeF === 'down') data = data.filter(d => d.priceChange24h < 0);
+
+  data.sort((a, b) => {
+    if (sortBy === 'symbol') return a.symbol.localeCompare(b.symbol);
+    if (sortBy === 'priceChange24h') return Math.abs(b.priceChange24h) - Math.abs(a.priceChange24h);
+    return b.volume24h - a.volume24h;
+  });
+
+  document.getElementById('rowCount').textContent = `${data.length} pairs`;
+
+  const maxVol = data[0]?.volume24h || 1;
+
+  if (data.length === 0) {
+    document.getElementById('tableContainer').innerHTML =
+      '<div class="loading">No results found</div>';
+    return;
+  }
+
+  const rows = data.map((d, i) => {
+    const pct = d.priceChange24h;
+    const cls = pct >= 0 ? 'pos' : 'neg';
+    const sign = pct >= 0 ? '+' : '';
+    const barW = Math.max(4, (d.volume24h / maxVol) * 120);
+    return `<tr>
+      <td class="rank">${i+1}</td>
+      <td class="td-symbol">${d.base}<span>/USDT</span></td>
+      <td class="td-vol">
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width:${barW}px"></div>
+          ${fmtVol(d.volume24h)}
+        </div>
+      </td>
+      <td class="td-change ${cls}">${sign}${pct.toFixed(2)}%</td>
+      <td class="td-price">${fmtPrice(d.price)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('tableContainer').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Symbol</th>
+          <th onclick="document.getElementById('sortBy').value='volume24h';renderTable()">Volume 24h (USDT) ↕</th>
+          <th onclick="document.getElementById('sortBy').value='priceChange24h';renderTable()">Change 24h ↕</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// Auto-refresh every 5 minutes
+loadData();
+setInterval(loadData, 5 * 60 * 1000);
+</script>
+</body>
+</html>
